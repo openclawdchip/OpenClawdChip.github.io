@@ -1,0 +1,1110 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>ClawFlowGen: Automated Evolution of Processors from Physical Parallel Prototypes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tiempos+Headline:wght@400;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #64748b;
+            --accent: #3b82f6;
+            --muted: #f8fafc;
+            --text: #0f172a;
+            --border: #e2e8f0;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+        }
+        
+        .font-display {
+            font-family: 'Tiempos Headline', serif;
+        }
+        
+        .hero-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-style: italic;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        
+        .toc-fixed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--muted);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            z-index: 100;
+            padding: 2rem 1.5rem;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+        
+        .toc-link {
+            display: block;
+            padding: 0.5rem 0;
+            color: var(--secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-left: 2px solid transparent;
+            padding-left: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .toc-link:hover,
+        .toc-link.active {
+            color: var(--primary);
+            border-left-color: var(--accent);
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--border), transparent);
+            margin: 4rem 0;
+        }
+        
+        .citation-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px dotted var(--accent);
+        }
+        
+        .citation-link:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .bento-item {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bento-large {
+            grid-row: span 2;
+        }
+        
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.9), rgba(59, 130, 246, 0.8));
+            color: white;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .data-highlight {
+            background: linear-gradient(135deg, var(--accent), #2563eb);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            display: inline-block;
+            margin: 0.25rem;
+        }
+        
+        /* Mermaid chart styling */
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 800px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mermaid-container .mermaid {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            cursor: grab;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .mermaid-container .mermaid svg {
+            max-width: 100%;
+            height: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid-container .mermaid:active {
+            cursor: grabbing;
+        }
+
+        .mermaid-container.zoomed .mermaid {
+            height: 100%;
+            width: 100%;
+            cursor: grab;
+        }
+
+        .mermaid-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .mermaid-control-btn {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #374151;
+            font-size: 14px;
+            min-width: 36px;
+            height: 36px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mermaid-control-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .mermaid-control-btn:active {
+            transform: scale(0.95);
+        }
+        
+        @media (max-width: 1024px) {
+            .toc-fixed {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .toc-fixed.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mermaid-control-btn:not(.reset-zoom) {
+                display: none;
+            }
+            .mermaid-controls {
+                top: auto;
+                bottom: 15px;
+                right: 15px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+            }
+
+            .bento-large {
+                grid-row: span 1;
+            }
+
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .hero-title {
+                font-size: clamp(1.8rem, 6vw, 2.5rem);
+            }
+
+            #hero .bento-grid {
+                margin-top: 1rem;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+  <base target="_blank">
+</head>
+
+  <body class="bg-slate-50">
+    <!-- Fixed Table of Contents -->
+    <nav class="toc-fixed">
+      <div class="mb-6">
+        <h3 class="font-display text-lg font-bold text-slate-900 mb-4">Contents</h3>
+        <div class="space-y-1">
+          <a href="#hero" class="toc-link">Abstract</a>
+          <a href="#introduction" class="toc-link">1. Introduction</a>
+          <a href="#methodology" class="toc-link">2. Methodology</a>
+          <a href="#inside-out" class="toc-link">3. Inside-Out Algorithm</a>
+          <a href="#experiments" class="toc-link">4. Experimental Results</a>
+          <a href="#insights" class="toc-link">5. Deep Insights</a>
+          <a href="#conclusion" class="toc-link">6. Conclusion</a>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-200">
+        <p class="text-xs text-slate-500 mb-2">Key Metrics</p>
+        <div class="space-y-2">
+          <div class="data-highlight text-xs">
+            <span class="block">92% Cortex-A72 Performance</span>
+          </div>
+          <div class="data-highlight text-xs">
+            <span class="block">11× Design Efficiency</span>
+          </div>
+          <div class="data-highlight text-xs">
+            <span class="block">45% Power Efficiency</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Hero Section -->
+      <section id="hero" class="relative min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 text-white overflow-hidden">
+        <img src="https://kimi-web-img.moonshot.cn/img/www.djdlabs.com/86e2795e32e944a7d838592ebc377c58d53275d7.jpg" alt="Microscopic view of a computer processor chip" class="absolute inset-0 w-full h-full object-cover opacity-20" size="wallpaper" aspect="wide" style="photo" query="computer processor chip microscopic" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+
+        <div class="hero-overlay">
+          <div class="container mx-auto px-8">
+            <div class="max-w-4xl">
+              <h1 class="hero-title mb-6 text-white">
+                ClawFlowGen: A Metaprogramming Methodology for Automated Evolution of Processors from Physical Parallel Prototypes
+              </h1>
+
+              <div class="bento-grid text-slate-900">
+                <div class="bento-item bento-large">
+                  <h3 class="font-display text-xl font-bold mb-3 text-slate-800">Abstract</h3>
+                  <div class="prose prose-sm text-slate-600">
+                    <p class="mb-3">Traditional microarchitecture design has been constrained by human instruction-set thinking that imposes serial constraints on inherently parallel physical substrates.</p>
+
+                    <p class="mb-3">This paper introduces <strong>ClawFlowGen</strong>, a metaprogramming methodology that models processors as self-organizing concurrent dataflow topologies rather than instruction executors.</p>
+
+                    <p>Using the OpenClaw framework&#39;s &#34;Inside-Out&#34; growth algorithm, we demonstrate automated evolution from operator islands to complete CPU/NPU implementations, achieving 92% of Cortex-A72 performance with 11× design efficiency improvement.</p>
+                  </div>
+                </div>
+
+                <div class="bento-item">
+                  <h4 class="font-semibold mb-2 text-slate-800">Key Innovation</h4>
+                  <p class="text-sm text-slate-600">Physical parallelism-first approach where control logic emerges from dataflow conflicts rather than being manually specified</p>
+                </div>
+
+                <div class="bento-item">
+                  <h4 class="font-semibold mb-2 text-slate-800">Core Results</h4>
+                  <div class="space-y-2">
+                    <div class="data-highlight text-sm">
+                      8-issue Claw-C: 92% CoreMark vs. Cortex-A72
+                    </div>
+                    <div class="data-highlight text-sm">
+                      Claw-N: 45% better power efficiency
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Introduction -->
+      <section id="introduction" class="py-16 bg-white">
+        <div class="container mx-auto px-8 max-w-4xl">
+          <h2 class="font-display text-4xl font-bold text-slate-900 mb-8">1. Introduction: Biological Transformation of Computing Architecture Evolution</h2>
+
+          <div class="prose prose-lg max-w-none">
+            <p class="lead text-xl text-slate-600 mb-8 italic">
+              The von Neumann architecture&#39;s fundamental contradiction lies in the irreconcilable tension between sequential software logic and parallel silicon physics.
+            </p>
+
+            <h3 class="font-display text-2xl font-semibold text-slate-800 mb-4">1.1 The Fundamental Contradiction</h3>
+
+            <p>For nearly eight decades, processor microarchitecture has struggled to bridge the gap between sequential programming abstractions and parallel physical substrates. Modern silicon processes fabricate billions of transistors that switch simultaneously, yet we impose sequential semantics through increasingly complex control mechanisms.</p>
+
+            <p>The mechanisms developed to extract parallelism—<strong>pipelining, superscalar issue, out-of-order execution, speculative execution</strong>—are increasingly recognized as <strong>technical debt rather than fundamental progress</strong>. Each generation adds complexity to recover parallelism that the programming model obscures.</p>
+
+            <blockquote class="border-l-4 border-blue-500 pl-6 italic text-slate-600 my-8">
+              &#34;The transistor budget devoted to speculative mechanisms has grown from 20% in early superscalars to over 50% in contemporary high-performance cores, yet delivered parallelism has increased far more slowly.&#34;
+            </blockquote>
+
+            <h3 class="font-display text-2xl font-semibold text-slate-800 mb-4">1.2 The RTL Design Bottleneck</h3>
+
+            <p>The emergence of <strong>generative AI and exascale data analytics</strong> has exposed fundamental inefficiencies that cannot be addressed by process scaling alone. Transformer models exhibit computational patterns poorly matched to CPU-style speculative execution, while GPU architectures impose synchronization overheads that waste 30-50% of theoretical throughput.</p>
+
+            <p>Manual Verilog coding has become a critical bottleneck, with typical defect densities of <strong>1-10 bugs per thousand lines</strong> requiring extensive verification cycles. The human cognitive capacity for simultaneously considering multiple constraints—timing, power, area, testability—is severely limited, leading to <strong>suboptimal decisions that propagate through the design hierarchy</strong>.</p>
+
+            <h3 class="font-display text-2xl font-semibold text-slate-800 mb-4">1.3 The Inside-Out Philosophy</h3>
+
+            <p>Drawing inspiration from developmental biology, ClawFlowGen proposes a radical inversion: <strong>start with physical parallelism, then generate control logic as needed</strong>. Just as neural structures self-organize from undifferentiated cells through activity-dependent refinement, hardware structure emerges from physical constraints and workload demands.</p>
+
+            <p>The &#34;Inside-Out&#34; terminology reflects this growth direction: from computational core to external interface, rather than the conventional outside-in progression from ISA specification to implementation. This inversion is not merely procedural but <strong>ontological</strong>: the processor exists as physical capacity before it exists as instruction interpreter.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Methodology -->
+      <section id="methodology" class="py-16 bg-slate-50">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <h2 class="font-display text-4xl font-bold text-slate-900 mb-8">2. Methodology: ClawFlowGen Evolution Model</h2>
+
+          <div class="mb-12">
+            <h3 class="font-display text-2xl font-semibold text-slate-800 mb-6">2.1 Four-Stage Evolutionary Process</h3>
+
+            <div class="mermaid-container">
+              <div class="mermaid-controls">
+                <button class="mermaid-control-btn zoom-in" title="放大">
+                  <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="mermaid-control-btn zoom-out" title="缩小">
+                  <i class="fas fa-search-minus"></i>
+                </button>
+                <button class="mermaid-control-btn reset-zoom" title="重置">
+                  <i class="fas fa-expand-arrows-alt"></i>
+                </button>
+                <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                  <i class="fas fa-expand"></i>
+                </button>
+              </div>
+              <div class="mermaid">
+                graph TD
+                A[&#34;Stage I: Physical Operator Tiling&#34;] --&gt; B[&#34;Stage II: AutoInterconnect Generation&#34;]
+                B --&gt; C[&#34;Stage III: Control Flow Collapse&#34;]
+                C --&gt; D[&#34;Stage IV: Evolutionary Refinement&#34;]
+                D --&gt; A
+
+                A1[&#34;Operator Island Deployment
+                <br/>P = {4, 8, 16, ..., 256}&#34;] --&gt; A
+                A2[&#34;Saturation with Slack Reservation&#34;] --&gt; A
+                A3[&#34;Atomic Power-Gated Units&#34;] --&gt; A
+
+                B1[&#34;Real-Time Conflict Detection&#34;] --&gt; B
+                B2[&#34;Traffic-Responsive Arbitration&#34;] --&gt; B
+                B3[&#34;Self-Healing Topology&#34;] --&gt; B
+
+                C1[&#34;CPU Mode: Dynamic Control Flow&#34;] --&gt; C
+                C2[&#34;NPU Mode: Static DMA Sequences&#34;] --&gt; C
+                C3[&#34;Decode Mask Parameterization&#34;] --&gt; C
+
+                D1[&#34;RealityCheck Verification&#34;] --&gt; D
+                D2[&#34;PPA-Driven Optimization&#34;] --&gt; D
+                D3[&#34;MEMORY.md Consultation&#34;] --&gt; D
+              </div>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-8 mb-12">
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+              <h4 class="font-display text-xl font-semibold text-slate-800 mb-4">2.2 Physical Operator Tiling (Stage I)</h4>
+              <p class="text-slate-600 mb-4">The evolutionary initial state (t=0) is characterized by complete absence of scheduling logic or instruction decoders. We define a fundamental set of physical operators Φ = {φ₁, φ₂, ..., φₙ} comprising basic computational primitives.</p>
+
+              <div class="bg-slate-50 p-4 rounded-lg">
+                <h5 class="font-semibold text-slate-700 mb-2">Parallelism Parameter Scaling (7nm)</h5>
+                <div class="text-sm text-slate-600 space-y-1">
+                  <div><strong>P=8:</strong> 128 operators, 28.3% area (Claw-C)</div>
+                  <div><strong>P=256:</strong> 4,096 operators, 72.8% area (Claw-N)</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+              <h4 class="font-display text-xl font-semibold text-slate-800 mb-4">2.3 AutoInterconnect Generation (Stage II)</h4>
+              <p class="text-slate-600 mb-4">AutoInterconnect implements continuous scanning of operator I/O requirements, with conflict detection triggered by simultaneous requests for shared resources. The system generates arbitration logic automatically based on observed traffic patterns.</p>
+
+              <div class="bg-slate-50 p-4 rounded-lg">
+                <h5 class="font-semibold text-slate-700 mb-2">Arbitration Function</h5>
+                <div class="text-sm text-slate-600 font-mono">
+                  A(t) = Σ[Rᵢ(t) ⊗ Wᵢ(t)] ⊕ C(t)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-slate-200">
+            <h4 class="font-display text-xl font-semibold text-slate-800 mb-6">2.4 Control Flow Collapse (Stage III)</h4>
+
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <h5 class="font-semibold text-slate-700 mb-3">CPU Mode: Dynamic Control Flow</h5>
+                <p class="text-slate-600 mb-3">For general-purpose computing, the decode mask evolves sophisticated dynamic control flow mechanisms including binary decision diagram (BDD) branch units that achieve 99.999999% functional correctness.</p>
+                <div class="data-highlight text-sm">
+                  Bootable Linux, complex application support
+                </div>
+              </div>
+
+              <div>
+                <h5 class="font-semibold text-slate-700 mb-3">NPU Mode: Static DMA Sequences</h5>
+                <p class="text-slate-600 mb-3">For tensor workloads, control flow collapses to static, latency-deterministic DMA controller sequences. Control logic drops from 40-50% to less than 10% of area.</p>
+                <div class="data-highlight text-sm">
+                  78% ALU utilization vs. 45% typical
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Inside-Out Algorithm -->
+      <section id="inside-out" class="py-16 bg-white">
+        <div class="container mx-auto px-8 max-w-4xl">
+          <h2 class="font-display text-4xl font-bold text-slate-900 mb-8">3. Inside-Out Algorithm: Biological and Engineering Perspectives</h2>
+
+          <div class="prose prose-lg max-w-none">
+            <h3 class="font-display text-2xl font-semibold text-slate-800 mb-4">3.1 Mechanisms of Spontaneous Core Emergence</h3>
+
+            <p>The Inside-Out algorithm represents a fundamental shift from language-driven to function-demand-driven design. Conventional processor design begins with instruction set architecture definition—a fundamentally &#34;language-driven&#34; process where capabilities are specified through instruction vocabulary and grammar.</p>
+
+            <p>This linguistic foundation imposes sequential constraints that propagate through all subsequent design stages. Inside-Out design inverts this relationship: the designer specifies functional requirements—computations to be performed, performance targets, energy constraints—and the system evolves hardware structures to satisfy these requirements.</p>
+
+            <h3 class="font-display text-2xl font-semibold text-slate-800 mb-4">3.2 Eliminating the Hardware Lottery</h3>
+
+            <p>The &#34;hardware lottery&#34; describes how algorithm development is distorted by available hardware characteristics. Algorithms that map efficiently to prevalent architectures receive disproportionate attention, while potentially superior alternatives are neglected.</p>
+
+            <p>ClawFlowGen eliminates this distortion by enabling hardware-software co-evolution. When researchers develop a new algorithm, they can evolve hardware specifically optimized for its characteristics, rather than accepting performance penalties of mapping to existing platforms.</p>
+
+            <blockquote class="border-l-4 border-blue-500 pl-6 italic text-slate-600 my-8">
+              &#34;Future algorithm developers will no longer need to learn how to optimize code for hardware, but can demand that the system &#39;grow&#39; hardware adapted to their code.&#34;
+            </blockquote>
+
+            <h3 class="font-display text-2xl font-semibold text-slate-800 mb-4">3.3 Cross-Layer PPA Co-Optimization</h3>
+
+            <p>A critical capability enabled by OpenClaw is integration of physical design considerations throughout the evolutionary process. Conventional flows exhibit substantial &#34;semantic gap&#34; between front-end design and back-end implementation.</p>
+
+            <p>ClawFlowGen achieves full-flow awareness by maintaining physical feasibility throughout evolution. Each candidate design is rapidly evaluated through simplified physical synthesis, with feedback on timing, area, and power guiding subsequent mutations.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Experimental Results -->
+      <section id="experiments" class="py-16 bg-slate-50">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <h2 class="font-display text-4xl font-bold text-slate-900 mb-8">4. Experimental Results: 7nm Empirical Validation</h2>
+
+          <div class="grid lg:grid-cols-2 gap-8 mb-12">
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+              <h3 class="font-display text-xl font-semibold text-slate-800 mb-4">4.1 Claw-C CPU Performance</h3>
+
+              <div class="mb-4">
+                <img src="https://kimi-web-img.moonshot.cn/img/i.extremetech.com/587a033763cc4febddd563029e1db1d9f8e7bfe3.png" alt="7nm FinFET semiconductor wafer" class="w-full h-48 object-cover rounded-lg mb-4" size="medium" aspect="wide" style="photo" query="7nm FinFET wafer" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+              </div>
+
+              <div class="bg-slate-50 p-4 rounded-lg mb-4">
+                <h4 class="font-semibold text-slate-700 mb-3">Performance Comparison (7nm)</h4>
+                <div class="space-y-3 text-sm">
+                  <div class="flex justify-between">
+                    <span>Issue Width:</span>
+                    <span class="font-semibold">8-way (vs. 3-way A72)</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>CoreMark Score:</span>
+                    <span class="font-semibold">0.92× A72 baseline</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Logic Gates:</span>
+                    <span class="font-semibold">2.1M (vs. 3.2M A72)</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Development Time:</span>
+                    <span class="font-semibold">2 person-months</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="data-highlight text-sm">
+                11× efficiency improvement with 92% performance parity
+              </div>
+            </div>
+
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+              <h3 class="font-display text-xl font-semibold text-slate-800 mb-4">4.2 Claw-N NPU Efficiency</h3>
+
+              <div class="mb-4">
+                <img src="https://kimi-web-img.moonshot.cn/img/placeholder-0620/图片18.png" alt="Deep learning processor silicon wafer" class="w-full h-48 object-cover rounded-lg mb-4" size="medium" aspect="wide" style="photo" query="deep learning processor silicon wafer" referrerpolicy="no-referrer" data-modified="1"/>
+              </div>
+
+              <div class="bg-slate-50 p-4 rounded-lg mb-4">
+                <h4 class="font-semibold text-slate-700 mb-3">ResNet-50 Inference</h4>
+                <div class="space-y-3 text-sm">
+                  <div class="flex justify-between">
+                    <span>Power Efficiency:</span>
+                    <span class="font-semibold">145% DMIPS/mW</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>ALU Utilization:</span>
+                    <span class="font-semibold">78% (vs. 45% typical)</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Thermal Reduction:</span>
+                    <span class="font-semibold">65% peak temp</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Control Logic Area:</span>
+                    <span class="font-semibold">&lt;10% (vs. 40-50%)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="data-highlight text-sm">
+                45% better power efficiency than conventional NPUs
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg p-8 shadow-sm border border-slate-200">
+            <h3 class="font-display text-xl font-semibold text-slate-800 mb-6">4.3 Scalability Analysis</h3>
+
+            <div class="mermaid-container">
+              <div class="mermaid-controls">
+                <button class="mermaid-control-btn zoom-in" title="放大">
+                  <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="mermaid-control-btn zoom-out" title="缩小">
+                  <i class="fas fa-search-minus"></i>
+                </button>
+                <button class="mermaid-control-btn reset-zoom" title="重置">
+                  <i class="fas fa-expand-arrows-alt"></i>
+                </button>
+                <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                  <i class="fas fa-expand"></i>
+                </button>
+              </div>
+              <div class="mermaid">
+                graph LR
+                A[&#34;P=4
+                <br/>32 Operators
+                <br/>12.5% Area&#34;] --&gt; B[&#34;P=8
+                <br/>128 Operators
+                <br/>28.3% Area&#34;]
+                B --&gt; C[&#34;P=16
+                <br/>512 Operators
+                <br/>45.1% Area&#34;]
+                C --&gt; D[&#34;P=64
+                <br/>2048 Operators
+                <br/>61.7% Area&#34;]
+                D --&gt; E[&#34;P=256
+                <br/>4096 Operators
+                <br/>72.8% Area&#34;]
+
+                B -.-&gt; B1[&#34;Claw-C
+                <br/>CPU Mode&#34;]
+                E -.-&gt; E1[&#34;Claw-N
+                <br/>NPU Mode&#34;]
+
+                style B1 fill:#e1f5fe
+                style E1 fill:#f3e5f5
+              </div>
+            </div>
+
+            <p class="text-slate-600 mt-4">
+              As parallelism parameter P increases, the evolutionary process automatically discovers appropriate architectural organizations. At P=64, the system spontaneously transitions from flat interconnect to hierarchical memory organization, inserting L2 caches and coherence bridges when global interconnect delay becomes prohibitive.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Deep Insights -->
+      <section id="insights" class="py-16 bg-white">
+        <div class="container mx-auto px-8 max-w-4xl">
+          <h2 class="font-display text-4xl font-bold text-slate-900 mb-8">5. Deep Insights: Second and Third-Order Effects</h2>
+
+          <div class="prose prose-lg max-w-none">
+            <h3 class="font-display text-2xl font-semibold text-slate-800 mb-4">5.1 Escaping the Hardware Lottery</h3>
+
+            <p>ClawFlowGen&#39;s most profound impact may be its elimination of the &#34;hardware lottery&#34;—the distortion of algorithm development by available hardware characteristics. When researchers can evolve hardware specifically optimized for their algorithms, selection can be based on fundamental suitability rather than implementation convenience.</p>
+
+            <p>This capability democratizes access to custom silicon, enabling edge devices with strict power budgets, cloud systems with throughput requirements, and safety-critical systems with determinism needs—all served by hardware evolved for their specific constraints.</p>
+
+            <h3 class="font-display text-2xl font-semibold text-slate-800 mb-4">5.2 Software-Defined Hardware&#39;s Ultimate Form</h3>
+
+            <p>The integration of OpenClaw&#39;s agent framework imbues hardware with a form of &#34;autonomous consciousness.&#34; Through heartbeat mechanisms and continuous learning modules, processors can monitor their own performance and trigger &#34;logical re-evolution&#34; when inefficiencies are detected.</p>
+
+            <p>A deployed Claw-C processor noticing persistent branch prediction failures in video processing could autonomously regenerate microcode optimized for that workload pattern, fundamentally shifting from fixed circuits to fluid dataflow topologies.</p>
+
+            <h3 class="font-display text-2xl font-semibold text-slate-800 mb-4">5.3 Security Through Structural Obscurity</h3>
+
+            <p>Automated generation yields unexpected security benefits. Traditional architecture-based attacks like Spectre become impractical against processors whose organization emerges from evolutionary processes rather than human-understandable patterns.</p>
+
+            <p>Physical-level hardware containers provide process isolation more fundamental than software-based approaches. Dynamic secret management, inspired by OpenClaw&#39;s ClawShell, isolates sensitive credentials in privileged processes inaccessible through conventional architectural interfaces.</p>
+
+            <h3 class="font-display text-2xl font-semibold text-slate-800 mb-4">5.4 The SaaSpocalypse in Silicon</h3>
+
+            <p>The demonstrated 11× efficiency improvement signals a fundamental shift toward &#34;Silicon-as-a-Service.&#34; As OpenClaw reduces design barriers, flagship processors that once required hundreds of engineers and hundreds of millions of dollars may be created by small teams using cloud-based evolution.</p>
+
+            <p>This democratization will fragment the semiconductor market, with custom accelerators proliferating for specific workloads. The competitive advantage will shift from who can design the most complex chips to who can most effectively evolve hardware for their specific computational needs.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Conclusion -->
+      <section id="conclusion" class="py-16 bg-slate-50">
+        <div class="container mx-auto px-8 max-w-4xl">
+          <h2 class="font-display text-4xl font-bold text-slate-900 mb-8">6. Conclusion and Future Directions</h2>
+
+          <div class="prose prose-lg max-w-none">
+            <p class="lead text-xl text-slate-600 mb-8 italic">
+              The automatic evolution of processors from physical parallel prototypes represents a fundamental shift toward computational expression that better aligns with objective physical reality.
+            </p>
+
+            <p>Through ClawFlowGen and its implementation in the OpenClaw framework, we have demonstrated three core principles:</p>
+
+            <div class="grid md:grid-cols-3 gap-6 my-8">
+              <div class="bg-white p-6 rounded-lg border border-slate-200">
+                <h4 class="font-semibold text-slate-800 mb-3">Physical-First Feasibility</h4>
+                <p class="text-sm text-slate-600">Abandoning predetermined control logic in favor of operator self-organization produces functionally correct, high-performance processor cores.</p>
+              </div>
+
+              <div class="bg-white p-6 rounded-lg border border-slate-200">
+                <h4 class="font-semibold text-slate-800 mb-3">Inside-Out Efficiency</h4>
+                <p class="text-sm text-slate-600">Growth from computational core to interface achieves superior resource utilization and timing robustness compared to top-down design.</p>
+              </div>
+
+              <div class="bg-white p-6 rounded-lg border border-slate-200">
+                <h4 class="font-semibold text-slate-800 mb-3">Decoder Mask Flexibility</h4>
+                <p class="text-sm text-slate-600">Parameterized instruction mapping enables dynamic control for general-purpose code while collapsing to static efficiency for tensor operations.</p>
+              </div>
+            </div>
+
+            <p>Looking forward, we envision a transition from &#34;writing&#34; chips to &#34;growing&#34; them. Designers will become gardeners, selecting operator traits from physical gene pools and applying optimization pressures, allowing machines to evolve silicon lifeforms beyond human design capabilities.</p>
+
+            <p>This methodology&#39;s maturation will usher in an era of &#34;sovereign chips&#34;—customized, efficient, secure computational substrates that end the resource misallocation of general-purpose computing. Future computation will evolve endlessly toward greater efficiency and deeper intelligence, much like biological systems.</p>
+
+            <div class="bg-blue-50 p-6 rounded-lg mt-8">
+              <h4 class="font-semibold text-blue-900 mb-3">Future Research Directions</h4>
+              <ul class="text-blue-800 space-y-2">
+                <li>• Integration with advanced manufacturing processes (3nm and beyond)</li>
+                <li>• Extension to heterogeneous multi-chip modules</li>
+                <li>• Development of domain-specific evolutionary pressures</li>
+                <li>• Commercial deployment of Silicon-as-a-Service platforms</li>
+                <li>• Exploration of neuromorphic and quantum extensions</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="bg-slate-900 text-white py-12">
+        <div class="container mx-auto px-8 max-w-4xl">
+          <div class="grid md:grid-cols-2 gap-8">
+            <div>
+              <h3 class="font-display text-xl font-bold mb-4">Authors</h3>
+              <div class="space-y-2 text-slate-300">
+                <div>
+                  <strong>Ji Zhao</strong>
+                  <br/>
+                  <span class="text-sm">Clawdchip Team</span>
+                </div>
+                <div>
+                  <strong>Xiao Lin</strong> (Corresponding Author)
+                  <br/>
+                  <span class="text-sm">Institute of Automation, Chinese Academy of Sciences</span>
+                  <br/>
+                  <a href="mailto:xiao.lin@ia.ac.cn" class="text-blue-400 hover:text-blue-300">xiao.lin@ia.ac.cn</a>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="font-display text-xl font-bold mb-4">Citation</h3>
+              <div class="bg-slate-800 p-4 rounded-lg text-sm text-slate-300">
+                <p>Zhao, J., &amp; Lin, X. (2026). ClawFlowGen: A Metaprogramming Methodology for Automated Evolution of General-Purpose Processors and Tensor Accelerators from Physical Parallel Prototypes. <em>Journal of Advanced Computer Architecture</em>, 15(2), 123-156.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t border-slate-700 mt-8 pt-8 text-center text-slate-400">
+            <p>© 2026 Institute of Automation, Chinese Academy of Sciences. Licensed under Creative Commons Attribution 4.0.</p>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+        // Initialize Mermaid with custom theme and configuration
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#3b82f6',
+                lineColor: '#64748b',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0',
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                secondBkg: '#f8fafc',
+                tertiaryBkg: '#e2e8f0',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '14px'
+            },
+            flowchart: {
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20,
+                nodeSpacing: 50,
+                rankSpacing: 80,
+                diagramPadding: 20
+            },
+            fontFamily: 'Inter, sans-serif'
+        });
+
+        // Initialize Mermaid Controls for zoom and pan
+        function initializeMermaidControls() {
+            const containers = document.querySelectorAll('.mermaid-container');
+
+            containers.forEach(container => {
+            const mermaidElement = container.querySelector('.mermaid');
+            let scale = 1;
+            let isDragging = false;
+            let startX, startY, translateX = 0, translateY = 0;
+
+            // 触摸相关状态
+            let isTouch = false;
+            let touchStartTime = 0;
+            let initialDistance = 0;
+            let initialScale = 1;
+            let isPinching = false;
+
+            // Zoom controls
+            const zoomInBtn = container.querySelector('.zoom-in');
+            const zoomOutBtn = container.querySelector('.zoom-out');
+            const resetBtn = container.querySelector('.reset-zoom');
+            const fullscreenBtn = container.querySelector('.fullscreen');
+
+            function updateTransform() {
+                mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+                if (scale > 1) {
+                container.classList.add('zoomed');
+                } else {
+                container.classList.remove('zoomed');
+                }
+
+                mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+            }
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                scale = Math.min(scale * 1.25, 4);
+                updateTransform();
+                });
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                scale = Math.max(scale / 1.25, 0.3);
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+                updateTransform();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+                });
+            }
+
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                });
+            }
+
+            // Mouse Events
+            mermaidElement.addEventListener('mousedown', (e) => {
+                if (isTouch) return; // 如果是触摸设备，忽略鼠标事件
+
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                mermaidElement.style.cursor = 'grabbing';
+                updateTransform();
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isTouch) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            // 获取两点之间的距离
+            function getTouchDistance(touch1, touch2) {
+                return Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+                );
+            }
+
+            // Touch Events - 触摸事件处理
+            mermaidElement.addEventListener('touchstart', (e) => {
+                isTouch = true;
+                touchStartTime = Date.now();
+
+                if (e.touches.length === 1) {
+                // 单指拖动
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+
+                } else if (e.touches.length === 2) {
+                // 双指缩放
+                isPinching = true;
+                isDragging = false;
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = getTouchDistance(touch1, touch2);
+                initialScale = scale;
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging && !isPinching) {
+                // 单指拖动
+                const touch = e.touches[0];
+                translateX = touch.clientX - startX;
+                translateY = touch.clientY - startY;
+                updateTransform();
+
+                } else if (e.touches.length === 2 && isPinching) {
+                // 双指缩放
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = getTouchDistance(touch1, touch2);
+
+                if (initialDistance > 0) {
+                    const newScale = Math.min(Math.max(
+                    initialScale * (currentDistance / initialDistance),
+                    0.3
+                    ), 4);
+                    scale = newScale;
+                    updateTransform();
+                }
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchend', (e) => {
+                // 重置状态
+                if (e.touches.length === 0) {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                // 延迟重置isTouch，避免鼠标事件立即触发
+                setTimeout(() => {
+                    isTouch = false;
+                }, 100);
+                } else if (e.touches.length === 1 && isPinching) {
+                // 从双指变为单指，切换为拖动模式
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+                }
+
+                updateTransform();
+            });
+
+            mermaidElement.addEventListener('touchcancel', (e) => {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                setTimeout(() => {
+                isTouch = false;
+                }, 100);
+
+                updateTransform();
+            });
+
+            // Enhanced wheel zoom with better center point handling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+                // Adjust translation to zoom towards center
+                if (newScale !== scale) {
+                const scaleDiff = newScale / scale;
+                translateX = translateX * scaleDiff;
+                translateY = translateY * scaleDiff;
+                scale = newScale;
+
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+
+                updateTransform();
+                }
+            });
+
+            // Initialize display
+            updateTransform();
+            });
+        }
+
+        // Initialize the mermaid controls
+        initializeMermaidControls();
+
+        // Table of Contents functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tocLinks = document.querySelectorAll('.toc-link');
+            const sections = document.querySelectorAll('section[id]');
+            
+            // Smooth scrolling
+            tocLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetSection = document.getElementById(targetId);
+                    
+                    if (targetSection) {
+                        targetSection.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+            
+            // Active section highlighting
+            function updateActiveSection() {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    if (window.scrollY >= sectionTop - 200) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + current) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+            
+            window.addEventListener('scroll', updateActiveSection);
+            updateActiveSection();
+        });
+
+        // Mobile TOC toggle
+        const tocToggle = document.createElement('button');
+        const tocFixed = document.querySelector('.toc-fixed');
+        
+        tocToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        tocToggle.className = 'fixed top-4 left-4 z-50 bg-white p-3 rounded-lg shadow-lg lg:hidden';
+        document.body.appendChild(tocToggle);
+        
+        tocToggle.addEventListener('click', function() {
+            tocFixed.classList.toggle('open');
+        });
+        
+        // Close TOC when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            if (tocFixed.classList.contains('open') && 
+                !tocFixed.contains(event.target) && 
+                event.target !== tocToggle) {
+                tocFixed.classList.remove('open');
+            }
+        });
+    </script>
+  
+
+</body></html>
