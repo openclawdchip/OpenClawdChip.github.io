@@ -26,6 +26,16 @@ h2 {
     padding-bottom: 6px;
 }
 
+/* 新增的子项目标题样式，模拟 h2 的横线效果 */
+h3.project-header {
+    font-size: 18px;
+    font-weight: normal;
+    margin-top: 40px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
+    color: #333;
+}
+
 .project-description {
     margin-top: 20px;
     font-size: 16px;
@@ -33,29 +43,12 @@ h2 {
 }
 
 .paper {
-    margin-top: 30px;
+    margin-top: 15px; /* 稍微缩小与上方标题的间距 */
 }
 
 .paper-title {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: normal;
-}
-
-.paper-authors {
-    font-size: 14px;
-    color: #555;
-    margin-top: 5px;
-}
-
-.paper-links {
-    margin-top: 8px;
-    font-size: 14px;
-}
-
-.paper-abstract {
-    margin-top: 10px;
-    font-size: 15px;
-    color: #333;
 }
 
 a {
@@ -85,22 +78,21 @@ OpenClawdChip explores the evolution of intelligent agents from digital cognitio
 
 <h2>Technical Reports</h2>
 
-<!-- ===== Paper 1 ===== -->
 <div class="paper">
-
-<div class="paper-title">
-The Evolutionary Spectrum of AI Agents: A Framework from Digital Reasoning to Carrier Iteration
-<a href="papers/carrier_iteration_framework.pdf" target="_blank">[PDF]</a>
+    <div class="paper-title">
+        The Evolutionary Spectrum of AI Agents: A Framework from Digital Reasoning to Carrier Iteration
+        <a href="papers/carrier_iteration_framework.pdf" target="_blank">[PDF]</a>
+    </div>
 </div>
 
-<div class="paper-abstract">
-We introduce carrier-iteration capability as a new analytical axis for characterizing agent evolution. The framework defines a six-level spectrum (L0–L5) ranging from fixed digital agents to systems capable of redesigning their own physical carriers.
+<h2 class="project-header">Projects</h2>
+
+<div class="paper">
+    <div class="paper-title">
+        ClawFlowGen Explorer：基于物理并行的通用处理器演化方法学 
+        <a href="ClawFlowGen.html" target="_blank">[Project Page]</a>
+    </div>
 </div>
-
-</div>
-<!-- ===== End Paper 1 ===== -->
-
-
 <div class="footer">
 © 2026 OpenClawdChip | www.clawdchip.com
 </div>
